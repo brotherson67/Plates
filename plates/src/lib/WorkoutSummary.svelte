@@ -15,14 +15,14 @@
 <BlockTitle>{workout.date}</BlockTitle>
 <List strong inset>
   {#each workout.exercises as exercise (exercise.name)}
-    <ListItem
-      title={exercise.name}
-      after={formatVolume(calculateExerciseVolume(exercise), unit)}
-    />
+    {#snippet after()}
+      <span class="data-value">{formatVolume(calculateExerciseVolume(exercise), unit)}</span>
+    {/snippet}
+    <ListItem title={exercise.name} {after} />
   {/each}
 </List>
 <Block strong inset>
   <p data-testid="workout-total">
-    Total volume: {formatVolume(calculateWorkoutVolume(workout), unit)}
+    Total volume: <span class="data-value">{formatVolume(calculateWorkoutVolume(workout), unit)}</span>
   </p>
 </Block>

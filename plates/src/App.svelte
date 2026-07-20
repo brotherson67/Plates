@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { App, Page, Navbar, Block, Button } from 'konsta/svelte'
+  import { App, Page, Navbar, Tabbar, TabbarLink, Block, Button } from 'konsta/svelte'
   import type { SupabaseClient, Session } from '@supabase/supabase-js'
   import { getSupabase } from './lib/supabase'
   import { isPasswordRecoveryUrl, signOut } from './lib/auth'
@@ -15,9 +15,17 @@
 
   export let client: SupabaseClient = getSupabase()
 
+  type Tab = 'workouts' | 'routines' | 'exercises'
+  const TABS: Array<{ key: Tab; label: string }> = [
+    { key: 'workouts', label: 'Workouts' },
+    { key: 'routines', label: 'Routines' },
+    { key: 'exercises', label: 'Exercises' },
+  ]
+
   let session: Session | null = null
   let loading = true
   let needsNewPassword = isPasswordRecoveryUrl(typeof window !== 'undefined' ? window.location.href : '')
+  let activeTab: Tab = 'workouts'
 
   onMount(() => {
     client.auth.getSession().then(({ data }) => {
@@ -40,6 +48,7 @@
 
   async function handleSignOut(event: SubmitEvent) {
     event.preventDefault()
+    if (!window.confirm('Sign out of Plates?')) return
     await signOut(client)
   }
 
@@ -55,7 +64,15 @@
 
 <App theme="ios">
   <Page>
-    <Navbar title="Plates" />
+    <Navbar title="Plates">
+      {#snippet right()}
+        {#if session && !needsNewPassword}
+          <form on:submit={handleSignOut}>
+            <Button clear type="submit" data-testid="sign-out-button">Sign out</Button>
+          </form>
+        {/if}
+      {/snippet}
+    </Navbar>
 
     {#if loading}
       <Block>
@@ -66,16 +83,36 @@
     {:else if needsNewPassword}
       <SetPasswordForm {client} onDone={handlePasswordSet} />
     {:else}
-      <Block strong inset>
-        <form on:submit={handleSignOut}>
-          <Button type="submit" data-testid="sign-out-button">Sign out</Button>
-        </form>
-      </Block>
-      <WorkoutSummary workout={sampleWorkout} />
-      <LogWorkoutForm {client} userId={session.user.id} />
-      <ExerciseCatalog {client} />
-      <TemplateForm {client} userId={session.user.id} />
-      <RoutineForm {client} userId={session.user.id} />
+      {#if activeTab === 'workouts'}
+        <div data-testid="tab-panel-workouts">
+          <WorkoutSummary workout={sampleWorkout} />
+          <LogWorkoutForm {client} userId={session.user.id} />
+        </div>
+      {:else if activeTab === 'routines'}
+        <div data-testid="tab-panel-routines">
+          <RoutineForm {client} userId={session.user.id} />
+          <TemplateForm {client} userId={session.user.id} />
+        </div>
+      {:else}
+        <div data-testid="tab-panel-exercises">
+          <ExerciseCatalog {client} />
+        </div>
+      {/if}
+
+      <Block class="h-16" />
     {/if}
   </Page>
+
+  {#if session && !needsNewPassword}
+    <Tabbar labels class="fixed bottom-0 left-0 z-50">
+      {#each TABS as tab (tab.key)}
+        <TabbarLink
+          active={activeTab === tab.key}
+          label={tab.label}
+          onclick={() => (activeTab = tab.key)}
+          data-testid={`tab-${tab.key}`}
+        />
+      {/each}
+    </Tabbar>
+  {/if}
 </App>

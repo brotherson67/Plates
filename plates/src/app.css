@@ -11,4 +11,105 @@ body,
 body {
   margin: 0;
   overscroll-behavior-y: none;
+  font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/*
+ * Plates design tokens (see DESIGN.md): "instrument panel", not "consumer
+ * wellness app" - warm-graphite neutrals, one blued-steel accent, flat
+ * hairline-divided panels. Light is the base :root definition, dark
+ * overrides under the media query, per DESIGN.md's documented pattern.
+ */
+:root {
+  --bg: #efede7;
+  --surface: #ffffff;
+  --surface-2: #f4f2ec;
+  --border: #d8d4ca;
+  --text: #201e1a;
+  --text-muted: #6e6a60;
+  --accent: #2c5878;
+  --accent-strong: #1e4560;
+  --error: #9c3d33;
+
+  --glass-fill: rgba(255, 255, 255, 0.55);
+  --glass-edge: rgba(0, 0, 0, 0.06);
+  --glass-accent-fill: rgba(44, 88, 120, 0.14);
+  --glass-accent-fill-2: rgba(44, 88, 120, 0.05);
+  --glass-accent-edge: rgba(44, 88, 120, 0.35);
+  --accent-glow: rgba(44, 88, 120, 0.1);
+
+  /*
+   * Bridge into Konsta's iOS theme so its own components (Page, Block,
+   * List, Navbar, Tabbar, buttons, links) pick up our palette instead of
+   * their default blue-on-iOS-grey. --color-ios-light-* / --color-ios-dark-*
+   * are Konsta's own variable names (see node_modules/konsta/styles/colors.css)
+   * and hold fixed light/dark values always - which one applies to a given
+   * element is decided by Konsta's own dark: utility classes, not by these
+   * variables changing, so both are defined unconditionally.
+   */
+  --color-ios-light-surface: #efede7;
+  --color-ios-light-surface-1: #ffffff;
+  --color-ios-light-surface-2: #f4f2ec;
+  --color-ios-light-surface-3: #ffffff;
+  --color-ios-light-surface-variant: #f4f2ec;
+  --color-ios-dark-surface: #171716;
+  --color-ios-dark-surface-1: #211f1d;
+  --color-ios-dark-surface-2: #262421;
+  --color-ios-dark-surface-3: #211f1d;
+  --color-ios-dark-surface-variant: #262421;
+
+  /* Konsta derives every accent-driven utility (text-primary, bg-primary,
+     border-primary, active states) from these two variables. */
+  --k-color-primary: var(--accent);
+  --k-color-ios-primary-shade: var(--accent-strong);
+  --k-color-ios-primary-tint: var(--accent-strong);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171716;
+    --surface: #211f1d;
+    --surface-2: #262421;
+    --border: #38352f;
+    --text: #edeae3;
+    --text-muted: #9c978c;
+    --accent: #4a7a9e;
+    --accent-strong: #6fa0c4;
+    --error: #c96b5e;
+
+    --glass-fill: rgba(33, 31, 29, 0.55);
+    --glass-edge: rgba(237, 234, 227, 0.1);
+    --glass-accent-fill: rgba(74, 122, 158, 0.22);
+    --glass-accent-fill-2: rgba(74, 122, 158, 0.07);
+    --glass-accent-edge: rgba(111, 160, 196, 0.4);
+    --accent-glow: rgba(74, 122, 158, 0.14);
+  }
+}
+
+/*
+ * Flat panels, not rounded floating cards: Konsta's "inset" Block/List
+ * wrapper applies a large rounded-3xl corner under the iOS theme. Containers
+ * go fully flat; the 2-3px radius DESIGN.md reserves for controls is already
+ * what Konsta's own Button/ListInput classes resolve to by default, so no
+ * override is needed there.
+ */
+.k-block.rounded-3xl,
+.k-block.rounded-2xl,
+.k-list.rounded-3xl,
+.k-list.rounded-2xl {
+  border-radius: 0;
+}
+
+/* Section labels read like control-panel labeling ("TODAY", "TOTAL VOLUME"). */
+.k-block-title {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 800;
+}
+
+/* Numeric readouts (weights, volume totals) read like a scoreboard. */
+.data-value {
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }

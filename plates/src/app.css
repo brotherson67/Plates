@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+@import 'konsta/svelte/theme.css';
+@source '../node_modules/konsta';
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overscroll-behavior-y: none;
+}

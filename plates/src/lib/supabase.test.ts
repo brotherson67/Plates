@@ -1,5 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createSupabaseClient, getSupabase } from './supabase'
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
 
 describe('createSupabaseClient', () => {
   it('throws a clear error when the URL is missing', () => {
@@ -25,6 +29,11 @@ describe('createSupabaseClient', () => {
 
 describe('getSupabase (lazy singleton)', () => {
   it('throws when actually called without env vars configured, not merely on import', () => {
+    // Stub these explicitly rather than relying on the machine having no
+    // .env.local — once real Supabase credentials exist locally for dev,
+    // this test would otherwise silently start passing for the wrong reason.
+    vi.stubEnv('VITE_SUPABASE_URL', '')
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', '')
     // If this threw at import time, the whole test file would fail to load
     // (as it did before the fix) instead of surfacing as a normal assertion here.
     expect(() => getSupabase()).toThrow(/Missing Supabase configuration/)

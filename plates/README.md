@@ -78,12 +78,15 @@ Tests live next to the code they cover (`*.test.ts`), split into:
 
 ## Keeping this portable if a free tier ever changes
 
-- The database is plain Postgres. If Supabase's free tier ever stops working
-  for this project, export with `pg_dump` and restore into any other
-  Postgres host — or self-host the entire Supabase stack via their
-  [Docker Compose bundle](https://supabase.com/docs/guides/self-hosting/docker).
+- The database is plain Postgres, but the schema uses Supabase-specific
+  pieces (`auth.users`, `auth.uid()`, `auth.role()` in the RLS policies), so
+  it isn't portable to *any* Postgres host as-is — the realistic exit path is
+  to `pg_dump`/restore into a **self-hosted Supabase stack** (via their
+  [Docker Compose bundle](https://supabase.com/docs/guides/self-hosting/docker)),
+  which provides that same `auth` schema, rather than a bare Postgres instance.
 - Schema changes should be added as new numbered files in
   `supabase/migrations/`, not made ad hoc through the Supabase dashboard, so
-  the schema can always be replayed from scratch on any Postgres instance.
+  the schema can always be replayed from scratch on a fresh Supabase (hosted
+  or self-hosted) instance.
 - Periodically take a manual `pg_dump` backup as insurance, independent of
   Supabase's own backup promises.

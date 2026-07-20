@@ -4,6 +4,8 @@
 -- create/edit/delete their own. There is no public/anonymous access — the
 -- Supabase project's signups should be restricted to invited members only.
 
+create extension if not exists pgcrypto;
+
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   display_name text,
@@ -44,7 +46,8 @@ security definer set search_path = public
 as $$
 begin
   insert into public.profiles (id, display_name)
-  values (new.id, new.raw_user_meta_data ->> 'display_name');
+  values (new.id, new.raw_user_meta_data ->> 'display_name')
+  on conflict (id) do nothing;
   return new;
 end;
 $$;
@@ -66,7 +69,7 @@ create policy "profiles are readable by any signed-in member" on public.profiles
   for select using (auth.role() = 'authenticated');
 
 create policy "profiles are self-updatable" on public.profiles
-  for update using (auth.uid() = id);
+  for update using (auth.uid() = id) with check (auth.uid() = id);
 
 -- workouts: any signed-in member can view everyone's workouts (so progress
 -- is visible across the group); only the owner can create/edit/delete theirs.

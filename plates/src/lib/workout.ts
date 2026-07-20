@@ -6,12 +6,66 @@ export interface WorkoutSet {
 export interface Exercise {
   name: string
   sets: WorkoutSet[]
+  exerciseDefinitionId?: string
+  equipmentType?: EquipmentType
+}
+
+export type WorkoutKind = 'lifting' | 'cardio'
+export type EquipmentType = 'barbell' | 'dumbbell' | 'machine' | 'bodyweight' | 'other'
+export type CardioType = 'steady_state' | 'hiit' | 'jog' | 'walk' | 'sprints'
+
+export interface CardioDetails {
+  cardioType: CardioType
+  intendedDurationMinutes: number | null
+  intendedDistanceKm: number | null
+  actualDistanceKm: number | null
+  inclinePercent: number | null
 }
 
 export interface Workout {
   id: string
   date: string
   exercises: Exercise[]
+  kind?: WorkoutKind
+  templateId?: string | null
+  durationMinutes?: number | null
+  rpe?: number | null
+  cardio?: CardioDetails | null
+}
+
+export interface ExerciseDefinition {
+  id: string
+  name: string
+  equipmentType: EquipmentType
+}
+
+export interface TemplateExercise {
+  id: string
+  exerciseDefinitionId: string
+  targetSets: number | null
+  targetReps: number | null
+  position: number
+}
+
+export interface WorkoutTemplate {
+  id: string
+  name: string
+  kind: WorkoutKind
+  exercises: TemplateExercise[]
+}
+
+export interface Routine {
+  id: string
+  name: string
+  lengthDays: number | null
+}
+
+export interface RoutineWorkout {
+  id: string
+  routineId: string
+  templateId: string
+  dayIndex: number
+  position: number
 }
 
 export type WeightUnit = 'kg' | 'lb'

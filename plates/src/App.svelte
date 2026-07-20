@@ -7,6 +7,10 @@
   import LoginForm from './lib/LoginForm.svelte'
   import SetPasswordForm from './lib/SetPasswordForm.svelte'
   import WorkoutSummary from './lib/WorkoutSummary.svelte'
+  import ExerciseCatalog from './lib/ExerciseCatalog.svelte'
+  import TemplateForm from './lib/TemplateForm.svelte'
+  import RoutineForm from './lib/RoutineForm.svelte'
+  import LogWorkoutForm from './lib/LogWorkoutForm.svelte'
   import type { Workout } from './lib/workout'
 
   export let client: SupabaseClient = getSupabase()
@@ -68,6 +72,10 @@
         </form>
       </Block>
       <WorkoutSummary workout={sampleWorkout} />
+      <LogWorkoutForm {client} userId={session.user.id} />
+      <ExerciseCatalog {client} />
+      <TemplateForm {client} userId={session.user.id} />
+      <RoutineForm {client} userId={session.user.id} />
     {/if}
   </Page>
 </App>

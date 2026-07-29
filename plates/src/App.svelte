@@ -10,7 +10,9 @@
   import ExerciseCatalog from './lib/ExerciseCatalog.svelte'
   import TemplateForm from './lib/TemplateForm.svelte'
   import RoutineForm from './lib/RoutineForm.svelte'
-  import LogWorkoutForm from './lib/LogWorkoutForm.svelte'
+  import StartWorkoutPicker from './lib/StartWorkoutPicker.svelte'
+  import GuidedWorkout from './lib/GuidedWorkout.svelte'
+  import { loadDraft } from './lib/activeWorkoutDraft'
   import type { Workout } from './lib/workout'
 
   export let client: SupabaseClient = getSupabase()
@@ -26,6 +28,7 @@
   let loading = true
   let needsNewPassword = isPasswordRecoveryUrl(typeof window !== 'undefined' ? window.location.href : '')
   let activeTab: Tab = 'workouts'
+  let hasActiveDraft = false
 
   onMount(() => {
     client.auth.getSession().then(({ data }) => {
@@ -39,11 +42,17 @@
       session = newSession
     })
 
+    hasActiveDraft = loadDraft() !== null
+
     return () => subscription.unsubscribe()
   })
 
   function handlePasswordSet() {
     needsNewPassword = false
+  }
+
+  function handleWorkoutLogged(_workout: Workout) {
+    hasActiveDraft = false
   }
 
   async function handleSignOut(event: SubmitEvent) {
@@ -86,7 +95,21 @@
       {#if activeTab === 'workouts'}
         <div data-testid="tab-panel-workouts">
           <WorkoutSummary workout={sampleWorkout} />
-          <LogWorkoutForm {client} userId={session.user.id} />
+          {#if hasActiveDraft}
+            <GuidedWorkout
+              {client}
+              userId={session.user.id}
+              onLogged={handleWorkoutLogged}
+              onDiscarded={() => (hasActiveDraft = false)}
+            />
+          {:else}
+            <StartWorkoutPicker
+              {client}
+              userId={session.user.id}
+              onStarted={() => (hasActiveDraft = true)}
+              onLogged={handleWorkoutLogged}
+            />
+          {/if}
         </div>
       {:else if activeTab === 'routines'}
         <div data-testid="tab-panel-routines">

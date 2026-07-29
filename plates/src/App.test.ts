@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import type { Session, SupabaseClient } from '@supabase/supabase-js'
 import App from './App.svelte'
+import { createDraft, saveDraft, clearDraftStorage } from './lib/activeWorkoutDraft'
 
 function fakeClient(session: Session | null): SupabaseClient {
   return {
@@ -17,6 +18,7 @@ const fakeSession = { access_token: 'abc', user: { id: 'u1' } } as unknown as Se
 
 afterEach(() => {
   window.history.replaceState(null, '', '/')
+  clearDraftStorage()
 })
 
 describe('App (integration: auth gating + Konsta shell + WorkoutSummary)', () => {
@@ -96,5 +98,30 @@ describe('App (integration: auth gating + Konsta shell + WorkoutSummary)', () =>
     render(App, { client: fakeClient(null) })
     await screen.findByTestId('login-form')
     expect(screen.queryByTestId('tab-workouts')).not.toBeInTheDocument()
+  })
+})
+
+describe('App (integration: workouts tab branches on whether an active-workout draft exists)', () => {
+  it('renders the Start Workout picker when there is no active draft', async () => {
+    render(App, { client: fakeClient(fakeSession) })
+    await screen.findByTestId('tab-panel-workouts')
+    expect(await screen.findByTestId('freeform-button')).toBeInTheDocument()
+    expect(screen.queryByTestId('current-exercise-name')).not.toBeInTheDocument()
+  })
+
+  it('renders GuidedWorkout directly when an active draft exists', async () => {
+    const draft = createDraft({
+      kind: 'lifting',
+      templateId: 't1',
+      routineWorkoutId: null,
+      workoutDate: '2026-07-20',
+      exercises: [{ exerciseDefinitionId: 'ex1', name: 'Squat', targetSets: 3, targetReps: 5, sets: [], skipped: false }],
+    })
+    saveDraft(draft)
+
+    render(App, { client: fakeClient(fakeSession) })
+
+    expect(await screen.findByTestId('current-exercise-name')).toHaveTextContent('Squat')
+    expect(screen.queryByTestId('freeform-button')).not.toBeInTheDocument()
   })
 })

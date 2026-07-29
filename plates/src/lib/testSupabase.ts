@@ -12,7 +12,9 @@ export interface FakeQueryBuilder {
   update: ReturnType<typeof vi.fn>
   order: ReturnType<typeof vi.fn>
   eq: ReturnType<typeof vi.fn>
+  limit: ReturnType<typeof vi.fn>
   single: ReturnType<typeof vi.fn>
+  maybeSingle: ReturnType<typeof vi.fn>
   then: (resolve: (result: FakeResult) => unknown, reject?: (error: unknown) => unknown) => unknown
 }
 
@@ -28,16 +30,24 @@ export function fakeQueryBuilder(result: FakeResult): FakeQueryBuilder {
     update: vi.fn(() => builder),
     order: vi.fn(() => builder),
     eq: vi.fn(() => builder),
+    limit: vi.fn(() => builder),
     single: vi.fn(() => builder),
+    maybeSingle: vi.fn(() => builder),
     then: (resolve, reject) => Promise.resolve(result).then(resolve, reject),
   }
   return builder
 }
 
-export function fakeClientReturning(result: FakeResult): { client: SupabaseClient; from: ReturnType<typeof vi.fn> } {
+export function fakeClientReturning(result: FakeResult): {
+  client: SupabaseClient
+  from: ReturnType<typeof vi.fn>
+  rpc: ReturnType<typeof vi.fn>
+} {
   const builder = fakeQueryBuilder(result)
   const from = vi.fn(() => builder)
-  return { client: { from } as unknown as SupabaseClient, from }
+  // `.rpc(...).single()` must resolve the same way `.from(...)` chains do.
+  const rpc = vi.fn(() => builder)
+  return { client: { from, rpc } as unknown as SupabaseClient, from, rpc }
 }
 
 // For flows that make multiple sequential `.from(...)` calls (e.g. create a
@@ -46,5 +56,17 @@ export function fakeClientReturning(result: FakeResult): { client: SupabaseClien
 export function fakeClientSequence(results: FakeResult[]): { client: SupabaseClient; from: ReturnType<typeof vi.fn> } {
   const queue = [...results]
   const from = vi.fn(() => fakeQueryBuilder(queue.shift() ?? { data: null, error: null }))
+  return { client: { from } as unknown as SupabaseClient, from }
+}
+
+// For flows that read from several different tables (in any order, possibly
+// more than once each, e.g. loading routines/templates/catalog in parallel)
+// - each `.from(table)` call gets that table's queued result, independent of
+// call order or count.
+export function fakeClientByTable(resultsByTable: Record<string, FakeResult>): {
+  client: SupabaseClient
+  from: ReturnType<typeof vi.fn>
+} {
+  const from = vi.fn((table: string) => fakeQueryBuilder(resultsByTable[table] ?? { data: null, error: null }))
   return { client: { from } as unknown as SupabaseClient, from }
 }

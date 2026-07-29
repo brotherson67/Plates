@@ -50,6 +50,9 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // jsdom disables localStorage for the default opaque about:blank origin;
+    // activeWorkoutDraft's persistence tests need a real one to run against.
+    environmentOptions: { jsdom: { url: 'http://localhost/' } },
     setupFiles: ['./src/setupTests.ts'],
     globals: true,
   },

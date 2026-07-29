@@ -18,6 +18,10 @@
   let error: string | null = null
   let submitting = false
   let logged: Workout | null = null
+  // Stable for the life of this form: a resubmit after a failed attempt (e.g.
+  // a network drop) reuses the same key so the atomic save RPC treats it as
+  // a safe retry instead of a second workout.
+  let idempotencyKey = crypto.randomUUID()
 
   let exercises: Array<{ name: string; sets: WorkoutSet[] }> = []
   let draftName = ''
@@ -63,6 +67,7 @@
               workoutDate,
               durationMinutes: toNumberOrNull(durationMinutes),
               rpe: toNumberOrNull(rpe),
+              idempotencyKey,
               exercises,
             }
           : {
@@ -70,6 +75,7 @@
               workoutDate,
               durationMinutes: toNumberOrNull(durationMinutes),
               rpe: toNumberOrNull(rpe),
+              idempotencyKey,
               cardio: {
                 cardioType,
                 intendedDurationMinutes: toNumberOrNull(intendedDurationMinutes),

@@ -7,6 +7,7 @@
   import { createDraft, saveDraft, type ActiveExerciseDraft } from './activeWorkoutDraft'
   import type { ExerciseDefinition, Routine, RoutineWorkout, Workout, WorkoutTemplate } from './workout'
   import LogWorkoutForm from './LogWorkoutForm.svelte'
+  import RecoveryCheckIn from './RecoveryCheckIn.svelte'
 
   export let client: SupabaseClient
   export let userId: string
@@ -99,6 +100,8 @@
     }
   }
 </script>
+
+<RecoveryCheckIn {client} {userId} />
 
 <BlockTitle>Start a workout</BlockTitle>
 {#if loading}

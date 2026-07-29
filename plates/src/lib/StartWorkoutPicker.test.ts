@@ -26,6 +26,8 @@ function renderPicker(overrides: Record<string, { data: unknown; error: unknown 
       data: [{ id: 'te1', template_id: 't1', exercise_definition_id: 'ex1', target_sets: 3, target_reps: 5, position: 0 }],
       error: null,
     },
+    sleep_logs: { data: null, error: null },
+    recovery_checkins: { data: null, error: null },
     ...overrides,
   })
   const onStarted = vi.fn()
@@ -82,5 +84,13 @@ describe('StartWorkoutPicker (integration: pick a routine/template -> creates an
 
     expect(await screen.findByTestId('log-workout-form')).toBeInTheDocument()
     expect(loadDraft()).toBeNull()
+  })
+
+  it('renders the recovery check-in independent of the routine/template loading state', async () => {
+    renderPicker()
+    // The check-in's own edit form is reachable without waiting on the
+    // routine/template picker below it to finish loading.
+    await screen.findByTestId('recovery-checkin-edit-form')
+    expect(await screen.findByTestId('routine-item-r1')).toBeInTheDocument()
   })
 })

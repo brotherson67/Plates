@@ -10,8 +10,10 @@ export interface FakeQueryBuilder {
   select: ReturnType<typeof vi.fn>
   insert: ReturnType<typeof vi.fn>
   update: ReturnType<typeof vi.fn>
+  upsert: ReturnType<typeof vi.fn>
   order: ReturnType<typeof vi.fn>
   eq: ReturnType<typeof vi.fn>
+  gte: ReturnType<typeof vi.fn>
   limit: ReturnType<typeof vi.fn>
   single: ReturnType<typeof vi.fn>
   maybeSingle: ReturnType<typeof vi.fn>
@@ -28,8 +30,10 @@ export function fakeQueryBuilder(result: FakeResult): FakeQueryBuilder {
     select: vi.fn(() => builder),
     insert: vi.fn(() => builder),
     update: vi.fn(() => builder),
+    upsert: vi.fn(() => builder),
     order: vi.fn(() => builder),
     eq: vi.fn(() => builder),
+    gte: vi.fn(() => builder),
     limit: vi.fn(() => builder),
     single: vi.fn(() => builder),
     maybeSingle: vi.fn(() => builder),
@@ -68,5 +72,26 @@ export function fakeClientByTable(resultsByTable: Record<string, FakeResult>): {
   from: ReturnType<typeof vi.fn>
 } {
   const from = vi.fn((table: string) => fakeQueryBuilder(resultsByTable[table] ?? { data: null, error: null }))
+  return { client: { from } as unknown as SupabaseClient, from }
+}
+
+// Like fakeClientByTable, but for flows that call the same table more than
+// once in a single test with different expected results each time (e.g. a
+// table read on mount, then the same table written and re-read after a
+// save) - each table has its own queue, consumed in order; once a table's
+// queue is exhausted, further calls fall back to `{ data: null, error: null
+// }`.
+export function fakeClientByTableSequence(resultsByTable: Record<string, FakeResult[]>): {
+  client: SupabaseClient
+  from: ReturnType<typeof vi.fn>
+} {
+  const queues: Record<string, FakeResult[]> = Object.fromEntries(
+    Object.entries(resultsByTable).map(([table, results]) => [table, [...results]]),
+  )
+  const from = vi.fn((table: string) => {
+    const queue = queues[table]
+    const result = queue && queue.length > 0 ? queue.shift()! : { data: null, error: null }
+    return fakeQueryBuilder(result)
+  })
   return { client: { from } as unknown as SupabaseClient, from }
 }

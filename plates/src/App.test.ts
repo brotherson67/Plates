@@ -3,14 +3,19 @@ import { render, screen, fireEvent } from '@testing-library/svelte'
 import type { Session, SupabaseClient } from '@supabase/supabase-js'
 import App from './App.svelte'
 import { createDraft, saveDraft, clearDraftStorage } from './lib/activeWorkoutDraft'
+import { fakeClientByTable } from './lib/testSupabase'
 
 function fakeClient(session: Session | null): SupabaseClient {
+  // Stubs `.from` too (defaulting every table to no rows) since StartWorkoutPicker,
+  // GuidedWorkout, and Trends all query Supabase as soon as they're rendered.
+  const { from } = fakeClientByTable({})
   return {
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session } }),
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
       signOut: vi.fn().mockResolvedValue({ error: null }),
     },
+    from,
   } as unknown as SupabaseClient
 }
 
@@ -78,6 +83,7 @@ describe('App (integration: auth gating + Konsta shell + WorkoutSummary)', () =>
     expect(screen.getByTestId('tab-workouts')).toBeInTheDocument()
     expect(screen.getByTestId('tab-routines')).toBeInTheDocument()
     expect(screen.getByTestId('tab-exercises')).toBeInTheDocument()
+    expect(screen.getByTestId('tab-trends')).toBeInTheDocument()
   })
 
   it('switches panels when a different tab is tapped, without losing the sign-out control', async () => {
@@ -92,6 +98,11 @@ describe('App (integration: auth gating + Konsta shell + WorkoutSummary)', () =>
     await fireEvent.click(screen.getByTestId('tab-exercises'))
     expect(await screen.findByTestId('tab-panel-exercises')).toBeInTheDocument()
     expect(screen.queryByTestId('tab-panel-routines')).not.toBeInTheDocument()
+
+    await fireEvent.click(screen.getByTestId('tab-trends'))
+    expect(await screen.findByTestId('tab-panel-trends')).toBeInTheDocument()
+    expect(screen.queryByTestId('tab-panel-exercises')).not.toBeInTheDocument()
+    expect(screen.getByTestId('sign-out-button')).toBeInTheDocument()
   })
 
   it('does not show the tab bar before signing in', async () => {

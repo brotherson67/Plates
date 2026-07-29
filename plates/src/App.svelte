@@ -12,16 +12,18 @@
   import RoutineForm from './lib/RoutineForm.svelte'
   import StartWorkoutPicker from './lib/StartWorkoutPicker.svelte'
   import GuidedWorkout from './lib/GuidedWorkout.svelte'
+  import Trends from './lib/Trends.svelte'
   import { loadDraft } from './lib/activeWorkoutDraft'
   import type { Workout } from './lib/workout'
 
   export let client: SupabaseClient = getSupabase()
 
-  type Tab = 'workouts' | 'routines' | 'exercises'
+  type Tab = 'workouts' | 'routines' | 'exercises' | 'trends'
   const TABS: Array<{ key: Tab; label: string }> = [
     { key: 'workouts', label: 'Workouts' },
     { key: 'routines', label: 'Routines' },
     { key: 'exercises', label: 'Exercises' },
+    { key: 'trends', label: 'Trends' },
   ]
 
   let session: Session | null = null
@@ -115,6 +117,10 @@
         <div data-testid="tab-panel-routines">
           <RoutineForm {client} userId={session.user.id} />
           <TemplateForm {client} userId={session.user.id} />
+        </div>
+      {:else if activeTab === 'trends'}
+        <div data-testid="tab-panel-trends">
+          <Trends {client} userId={session.user.id} />
         </div>
       {:else}
         <div data-testid="tab-panel-exercises">

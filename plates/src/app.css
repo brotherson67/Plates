@@ -63,6 +63,15 @@ body {
   --k-color-primary: var(--accent);
   --k-color-ios-primary-shade: var(--accent-strong);
   --k-color-ios-primary-tint: var(--accent-strong);
+
+  /* Success stays a separate hue from the accent (DESIGN.md: semantic color
+     never reuses the accent hue) - a desaturated tool-green, same family as
+     the blued-steel accent so it still reads as "instrument panel". */
+  --success: #4c7a4a;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -83,7 +92,21 @@ body {
     --glass-accent-fill-2: rgba(74, 122, 158, 0.07);
     --glass-accent-edge: rgba(111, 160, 196, 0.4);
     --accent-glow: rgba(74, 122, 158, 0.14);
+
+    --success: #7fa87c;
   }
+}
+
+/*
+ * Subtle depth instead of a flat solid ground: a faint accent-tinted glow
+ * anchored behind the top of the page. Scrolls with content rather than
+ * `background-attachment: fixed`, which is janky on iOS Safari inside a
+ * scrolling container - cheap either way (one gradient, no images/blur), so
+ * it costs nothing on older phones.
+ */
+.k-page {
+  background-image: radial-gradient(ellipse 120% 32% at 50% 0%, var(--accent-glow), transparent 60%);
+  background-repeat: no-repeat;
 }
 
 /*
@@ -112,4 +135,98 @@ body {
   font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/* Buttons/controls: a deliberate press-down + a quiet focus glow, instead of
+   Konsta's bare instant state change. */
+.k-button {
+  transition: transform var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out);
+}
+.k-button:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+.k-button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  border-radius: 2px;
+}
+
+/* Small inline sub-labels ("Soreness (5 = not sore)", "Last night's sleep")
+   read like control-panel labeling, same spirit as BlockTitle but smaller. */
+.field-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* Rating pills (soreness/stress/motivation/sleep-quality 1-5 scales) - one
+   shared control instead of duplicating the same utility string per screen. */
+.rating-pill {
+  width: 44px;
+  height: 44px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+.rating-pill:active {
+  transform: scale(0.94);
+}
+.rating-pill--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* CSS-only loading spinner - a quarter-turn ring in the accent color. */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+  margin-right: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  animation: spin 700ms linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Active tab gets a small glowing indicator instead of just a color swap. */
+.k-tabbar-link-active .tab-icon {
+  filter: drop-shadow(0 0 4px var(--accent-glow));
+}
+.tab-icon {
+  transition: filter var(--duration-base) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }

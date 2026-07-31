@@ -73,24 +73,42 @@
   }
 
   const SPARKLINE = { width: 300, height: 60 }
+
+  // Turns a sparklinePoints() "x,y x,y ..." string into a closed area shape
+  // anchored to the sparkline's bottom edge, for a faint fill under the line.
+  function sparklineAreaPath(points: string, height: number): string {
+    if (!points) return ''
+    const coords = points.trim().split(' ')
+    const firstX = coords[0].split(',')[0]
+    const lastX = coords[coords.length - 1].split(',')[0]
+    return `M${firstX},${height} L${points} L${lastX},${height} Z`
+  }
+
+  function lastSparklinePoint(points: string): { x: number; y: number } | null {
+    if (!points) return null
+    const coords = points.trim().split(' ')
+    const [x, y] = coords[coords.length - 1].split(',').map(Number)
+    return { x, y }
+  }
+
   $: sleepSparklinePoints = sparklinePoints(buildTimeline(sleepLogs, (log) => log.hoursSlept), SPARKLINE)
   $: readinessSparklinePoints = sparklinePoints(buildTimeline(recoveryCheckins, (c) => c.readinessScore), SPARKLINE)
+  $: sleepAreaPath = sparklineAreaPath(sleepSparklinePoints, SPARKLINE.height)
+  $: readinessAreaPath = sparklineAreaPath(readinessSparklinePoints, SPARKLINE.height)
+  $: sleepEndpoint = lastSparklinePoint(sleepSparklinePoints)
+  $: readinessEndpoint = lastSparklinePoint(readinessSparklinePoints)
   $: recentSleepQualities = [...sleepLogs].slice(0, 7).reverse()
   $: latestReadiness = recoveryCheckins[0]?.readinessScore ?? null
 </script>
 
 {#snippet ratingRow(label: string, value: number, onSelect: (n: number) => void, testIdPrefix: string)}
   <div class="mb-4">
-    <p class="mb-1">{label}</p>
+    <p class="field-label mb-1">{label}</p>
     <div class="flex gap-2">
       {#each RATINGS as n (n)}
         <button
           type="button"
-          class={`w-11 h-11 rounded-sm flex items-center justify-center ${
-            n === value
-              ? 'bg-[var(--accent)] text-[var(--surface)]'
-              : 'bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text)]'
-          }`}
+          class="rating-pill {n === value ? 'rating-pill--active' : ''}"
           onclick={() => onSelect(n)}
           data-testid={`${testIdPrefix}-${n}`}
         >
@@ -104,7 +122,7 @@
 <BlockTitle>Trends</BlockTitle>
 {#if loading}
   <Block strong inset>
-    <p data-testid="trends-loading">Loading…</p>
+    <p data-testid="trends-loading"><span class="spinner" aria-hidden="true"></span>Loading…</p>
   </Block>
 {:else}
   {#if error}
@@ -114,7 +132,7 @@
   {/if}
 
   <Block strong inset data-testid="sleep-quick-log-form">
-    <p class="mb-1">Log last night's sleep</p>
+    <p class="field-label mb-1">Log last night's sleep</p>
     <input
       type="number"
       placeholder="Hours (optional)"
@@ -134,7 +152,12 @@
   <BlockTitle>Sleep (last {TREND_DAYS} days)</BlockTitle>
   <Block strong inset>
     <svg viewBox={`0 0 ${SPARKLINE.width} ${SPARKLINE.height}`} data-testid="sleep-trend-sparkline">
-      <polyline points={sleepSparklinePoints} fill="none" stroke="var(--accent)" stroke-width="2" />
+      <line x1="0" y1={SPARKLINE.height / 2} x2={SPARKLINE.width} y2={SPARKLINE.height / 2} stroke="var(--border)" stroke-width="1" />
+      <path d={sleepAreaPath} fill="var(--accent-glow)" stroke="none" />
+      <polyline points={sleepSparklinePoints} fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      {#if sleepEndpoint}
+        <circle cx={sleepEndpoint.x} cy={sleepEndpoint.y} r="3" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.5" />
+      {/if}
     </svg>
     <div class="flex gap-2 justify-end mt-2">
       {#each recentSleepQualities as log (log.id)}
@@ -149,7 +172,12 @@
       Latest: <span class="data-value" data-testid="readiness-latest-value">{latestReadiness ?? '—'}</span>
     </p>
     <svg viewBox={`0 0 ${SPARKLINE.width} ${SPARKLINE.height}`} data-testid="readiness-trend-sparkline">
-      <polyline points={readinessSparklinePoints} fill="none" stroke="var(--accent)" stroke-width="2" />
+      <line x1="0" y1={SPARKLINE.height / 2} x2={SPARKLINE.width} y2={SPARKLINE.height / 2} stroke="var(--border)" stroke-width="1" />
+      <path d={readinessAreaPath} fill="var(--accent-glow)" stroke="none" />
+      <polyline points={readinessSparklinePoints} fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      {#if readinessEndpoint}
+        <circle cx={readinessEndpoint.x} cy={readinessEndpoint.y} r="3" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.5" />
+      {/if}
     </svg>
   </Block>
 {/if}

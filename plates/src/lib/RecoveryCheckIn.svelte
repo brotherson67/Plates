@@ -100,16 +100,12 @@
 
 {#snippet ratingRow(label: string, value: number, onSelect: (n: number) => void, testIdPrefix: string)}
   <div class="mb-4">
-    <p class="mb-1">{label}</p>
+    <p class="field-label mb-1">{label}</p>
     <div class="flex gap-2">
       {#each RATINGS as n (n)}
         <button
           type="button"
-          class={`w-11 h-11 rounded-sm flex items-center justify-center ${
-            n === value
-              ? 'bg-[var(--accent)] text-[var(--surface)]'
-              : 'bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text)]'
-          }`}
+          class="rating-pill {n === value ? 'rating-pill--active' : ''}"
           onclick={() => onSelect(n)}
           data-testid={`${testIdPrefix}-${n}`}
         >
@@ -123,7 +119,7 @@
 <BlockTitle>Recovery check-in</BlockTitle>
 {#if loading}
   <Block strong inset>
-    <p data-testid="recovery-checkin-loading">Loading…</p>
+    <p data-testid="recovery-checkin-loading"><span class="spinner" aria-hidden="true"></span>Loading…</p>
   </Block>
 {:else}
   {#if error}
@@ -144,7 +140,7 @@
     <Block strong inset data-testid="recovery-checkin-edit-form">
       {#if !sleepLog}
         <div data-testid="inline-sleep-log-form">
-          <p class="mb-1">Last night's sleep</p>
+          <p class="field-label mb-1">Last night's sleep</p>
           <input
             type="number"
             placeholder="Hours (optional)"

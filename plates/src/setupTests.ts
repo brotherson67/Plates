@@ -33,3 +33,26 @@ if (typeof window !== 'undefined' && typeof window.localStorage?.getItem !== 'fu
 
   Object.defineProperty(window, 'localStorage', { value: new InMemoryStorage(), configurable: true, writable: true })
 }
+
+// jsdom doesn't implement the Web Animations API, which Svelte 5's built-in
+// transitions (fly, fade, etc.) call via `element.animate(...)`. Real
+// browsers all support this natively - stub just enough of the Animation
+// interface for transitions to run to completion without erroring in tests.
+if (typeof Element !== 'undefined' && typeof Element.prototype.animate !== 'function') {
+  Element.prototype.animate = function () {
+    return {
+      cancel: () => {},
+      finish: () => {},
+      play: () => {},
+      pause: () => {},
+      finished: Promise.resolve(),
+      effect: null,
+      currentTime: 0,
+      playState: 'finished',
+      onfinish: null,
+      oncancel: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as unknown as Animation
+  }
+}
